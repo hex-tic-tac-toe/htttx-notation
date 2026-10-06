@@ -88,10 +88,10 @@ Tags are formatted as `key[value]` pairs, unchanged from *v1* of the standard.
 ```
 <game>              ::= <metadata> <line>
 
-<metadata>          ::= <version> {<datum>} ";"
+<metadata>          ::= <version> {<tag>} ";"
 <version>           ::= "version[2]"
 
-<datum>             ::= <key> "[" <value> "]"
+<tag>               ::= <key> "[" <value> "]"
 
 
 <line>              ::= <turn> {<turn>}
