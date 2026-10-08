@@ -21,6 +21,9 @@ A **cell** - is a single hexagon which may have an X or an O *stone* placed, or 
 
 A **board** - is a complete infinite set of *cells* on which the game is played.
 
+A **setup** - is an initial state of the *board*, which defines placed *stones*, and which player should make the first
+*move*.
+
 **Coordinates** - are two integers, **q** and **r** defining a position of a *cell* on the *board*. In this 
 standard's text, coordinates are written as [*q*, *r*]. The coordinate system used in this standard is the same axial
 coordinate system as the one used in **v1**, with the same orientation.
@@ -86,22 +89,29 @@ Tags are formatted as `key[value]` pairs, unchanged from *v1* of the standard.
 ### Formal notation v2 format definition
 
 ```
-<game>              ::= <metadata> <line>
+<game>              ::= <metadata> <setup> [<line>]
+                      | <metadata> <line>
 
 <metadata>          ::= <version> {<tag>} ";"
 <version>           ::= "version[2]"
 
 <tag>               ::= <key> "[" <value> "]"
 
+<setup>             ::= "x" {<stone>} ":" "o" {<stone>} {<visual>} ";" 
+                      | "o" {<stone>} ":" "x" {<stone>} {<visual>} ";"
 
-<line>              ::= <turn> {<turn>}
+<line>              ::= <turn> {<turn>} [<final_turn>]
 <variation>         ::= "(" <line> ")"
 
-<turn>              ::= <turn_number> <move> (<move> | <final_move>) {<variation>} ";"
+<turn>              ::= <turn_number> <move> <move> {<variation>} ";"
+<final_turn>        ::= <turn_number> <move> <final_move> {<variation>} ";"
+
 <turn_number>       ::= <integer> "."
 
 <move>              ::= <stone> [<info>] {<visual>}
-<final_move>        ::= "[/]" [<info>] {<visual>}
+<final_move>        ::= <terminator> [<info>] {<visual>}
+
+<terminator>        ::= "[/]"
 
 <stone>             ::= "[" <coordinate> "]"
 
@@ -141,10 +151,12 @@ Tags are formatted as `key[value]` pairs, unchanged from *v1* of the standard.
 
 ### Game
 
-The *game notation* is structured as a set of turns. Turns are numbered with integers starting with 1. Odd numbered 
-*turns* are O player's, and even numbered ones are X player's *turns*. 
+The *game notation* is structured as a set of turns. Turns are numbered with integers starting with 1. In a standard 
+game with a default *setup* of a single X at [0, 0], odd numbered *turns* are O player's, and even numbered ones are X
+player's *turns*. 
 
-The first single X *stone* placed at [0, 0] is implicit, shouldn't be notated, and can be considered *turn* 0.
+The first single X *stone* placed at [0, 0] is implicit, shouldn't be notated, and can be considered *turn* 0. However,
+a different *setup* can be provided, overriding the implicit [0, 0].
 
 Each *turn* notation consists of a *turn* number, *stone* definitions, a list of optional *variants*, and a `;`. For
 example:
@@ -220,7 +232,7 @@ A *variation* contains a whole *line*, which means any number of full moves can 
 ### "Final move" terminator
 
 To support software that doesn't force the player to make both *moves*, if placing just one *stone* wins them the game,
-**v2** introduces a `<final_move>` token which looks like this: `[/]`. This token allows to notate games finished in
+**v2** introduces a `<terminator>` token which looks like this: `[/]`. This token allows to notate games finished in
 this manner, without having to invent a second *move*. It should be clear that a second *move* in such situations is
 irrelevant.
 
@@ -239,6 +251,45 @@ It's discouraged to have *info* and *visuals* applied to both the first *stone* 
 treated in such situations is left up to implementation.
 
 A terminator must only be used on the final *turn* of a *line*, but it doesn't have to result in a 6 in a row.
+
+### Setup
+
+To support arbitrary *position* and puzzle studies and notation, an optional *setup* section can be provided. This
+section can be used to both define the initial *stones* placed on the *board* before any *turn* takes place, as well as
+which player is making the first *turn* of the *main-line*.
+
+A *setup* section is structured as a pair of arbitrarily long lists of *stones*, one list prefixed with `x`, and the 
+other one with `o` in any order (the order is important). Lists are separated with a `:`. And the whole setup section
+ends with a `;`. For example:
+```
+o : x [0,0] ;
+```
+is a standard game *setup*. This *setup* is the implicit default for all *game notations* without a *setup* section.
+Making this notation:
+```
+version[2];
+o : x [0,0];
+1. [1,0][0,1];
+```
+fully equivalent to this one:
+```
+version[2];
+1. [1,0][0,1];
+```
+
+The order in which `x` section and `o` sections appear defines which player makes the first *turn*. If the first section
+is `o`, then the first *turn* after the *setup* is made by `o`, and vice-versa. (In this sense, the setup section could 
+be thought of as 2 extra unlimited *turns* with explicitly defined player sides). For example:
+```
+x [1,0] [0,1] : o [0,0] ;
+```
+would setup the *board* with Xs on [1, 0] and [0, 1], an O on [0, 0], and X is to make the first *turn*.
+
+*Setup* section can also include *visuals* right before the `;`. *Visuals* specified this way should be rendered on the
+initial *position*, i. e. the *position* before any of the *stones* from the *main-line* are placed.
+
+If a *game notation* provides a *setup* section, *main-line* can be omitted. This way of using *the notation* allows
+notating puzzles without providing a solution, as well as notating arbitrary *positions* in general.
 
 ## Recommended meta tags
 
